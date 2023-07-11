@@ -26,6 +26,7 @@
 #include "../errors.hpp"
 #include "../fastrng.hpp"
 #include "pairing_queue.hpp"
+#include <memory>
 
 namespace find_embedding {
 // Import some things from the std library
