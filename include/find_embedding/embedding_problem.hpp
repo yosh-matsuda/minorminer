@@ -212,8 +212,8 @@ class embedding_problem_base {
     //! Mutable references to qubit numbers and variable numbers
     vector<vector<int>> &qubit_nbrs, &var_nbrs;
 
-    //! distribution over [0, 0xffffffff]
-    uniform_int_distribution<> rand;
+    //! reusable distribution for randint()
+    uniform_int_distribution<int> rand;
 
     vector<int> var_order_space;
     vector<int> var_order_visited;
@@ -237,7 +237,7 @@ class embedding_problem_base {
               num_r(n_r),
               qubit_nbrs(q_n),
               var_nbrs(v_n),
-              rand(0, 0xffffffff),
+              rand(0, numeric_limits<int>::max()),
               var_order_space(n_v),
               var_order_visited(n_v, 0),
               var_order_shuffle(n_v),
@@ -316,7 +316,7 @@ class embedding_problem_base {
     //! transposition before returning the reference
     const vector<int> &var_neighbors(int u, rndswap_first) {
         if (var_nbrs[u].size() > 2) {
-            size_t i = randint(0, var_nbrs[u].size() - 2);
+            auto i = static_cast<size_t>(randint(0, static_cast<int>(var_nbrs[u].size()) - 2));
             std::swap(var_nbrs[u][i], var_nbrs[u][i + 1]);
         } else if (var_nbrs[u].size() == 2) {
             if (randint(0, 1)) std::swap(var_nbrs[u][0], var_nbrs[u][1]);
@@ -339,8 +339,11 @@ class embedding_problem_base {
     //! number of reserved qubits
     inline int num_reserved() const { return num_r; }
 
-    //! make a random integer between 0 and `m-1`
-    int randint(int a, int b) { return rand(params.rng, typename decltype(rand)::param_type(a, b)); }
+    //! make a random integer between `a` and `b`, inclusive
+    int randint(int a, int b) {
+        minorminer_assert(a <= b);
+        return rand(params.rng, typename decltype(rand)::param_type(a, b));
+    }
 
     //! shuffle the data bracketed by iterators `a` and `b`
     template <typename A, typename B>
